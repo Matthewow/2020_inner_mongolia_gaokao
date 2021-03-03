@@ -2,8 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import timeit
+import os
+from multiprocessing import Process, Pool
 
-start = timeit.default_timer()
+# 0 - 593600 has been done 
+
+
+INTERVAL = 20000
 
 def extract(page_number):
     articlepage = 'https://www.hk01.com/anything/' + str(page_number)
@@ -21,7 +26,7 @@ def extract(page_number):
         tag2 = tag1.replace("'hk01'","")
         tag3 = tag2.replace(",","")
         tag4 = tag3.replace(" ","")
-        f = open("index.txt", "a")
+        f = open("index0-32k.txt", "a")
         f.write("{}: {}\n".format(str(page_number),tag4))
         f.close()
 
@@ -31,14 +36,21 @@ def extract(page_number):
         for para in soup.find_all('p', {'class': 'sc-5vyyvj-0 jgHuKE sc-1v3m5dk-0 dKOvNf'}):
             f.write("{}\n".format(str(para.text)))
         f.close()
-        print(f"{page_number} Processing..." )
+        # print(f"{page_number} Processing..." )
     else:
         print(f"{page_number} Not Found" )
 
-for i in range (580000, 590000):
-    extract(i)
+def scrap_range(start):
+    for i in range (start, start + INTERVAL):
+        extract(i)
+        print(f"{i-start}/{INTERVAL}")
 
-stop = timeit.default_timer()
-print('Time: ', stop - start)  
+inputs = []
+num = 0
+for i in range(16):
+    inputs.append(num)
+    num += INTERVAL
 
+pool = Pool(16)
+pool.map(scrap_range, inputs)
 
